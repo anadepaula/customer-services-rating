@@ -13,7 +13,7 @@ def transcribe_audio():
         x_watson_learning_opt_out=False
     )
 
-    with open('./0001.wav', 'rb') as audio_file:
+    with open('./recordings/0001.wav', 'rb') as audio_file:
         return speech_to_text.recognize(
             audio_file, content_type='audio/wav', model='en-US_BroadbandModel')
 
