@@ -1,10 +1,13 @@
 import os
 import json
+import sys
+import argparse
+from time import strftime
 from os.path import join, dirname
 from watson_developer_cloud import NaturalLanguageUnderstandingV1 as NaturalLanguageUnderstanding
 from watson_developer_cloud import SpeechToTextV1 as SpeechToText
 import watson_developer_cloud.natural_language_understanding.features.v1 as features
-from speech_sentiment_python.recorder import Recorder
+from audio_recorder.recorder import Recorder
 
 #------------------------------------------------------------------------------#
 
@@ -45,18 +48,38 @@ def get_text_data(text):
 #------------------------------------------------------------------------------#
 
 def main():
-    recorder = Recorder("speech.wav")
+    # parse command line parameters
+    parser = argparse.ArgumentParser(
+        description=('client to process audio using Watson Developer Cloud')
+    )
+    parser.add_argument(
+        '-in', action = 'store', dest='file_path',
+        default = './recordings/audio_'+strftime("%m-%d-%y_%H:%M")+'.wav',
+        help = 'absolute file path, if an existing audio will be used.'
+    )
+    parser.add_argument(
+        '-model', action = 'store', dest='model',
+        default = 'en-US_BroadbandModel',
+        help = 'insert the model, according to the sample rate and language.'
+    )
+    args = parser.parse_args()
 
-    print("Say something in english, please.")
-    recorder.record_to_file()
-    print("Audio recorded!\n")
-
+    if not os.path.isfile(args.file_path):
+        recorder = Recorder(args.file_path)
+        print("Say something in english, please.")
+        recorder.record_to_file()
+        print("Audio recorded!\n")
 
     print("Transcribing audio....")
-    result = transcribe_audio('speech.wav')
+    result = transcribe_audio(args.file_path)
     print('Done!\n')
 
-    text = result['results'][0]['alternatives'][0]['transcript']
+    try:
+        text = result['results'][0]['alternatives'][0]['transcript']
+    except:
+        print("I'm sorry, the audio is blank! Try again.")
+        sys.exit()
+
     print('Audio text: '"'{}'"'\n'.format(text))
 
     print('Getting text data...')
@@ -76,7 +99,7 @@ def main():
     for element in emotions.keys():
         print ("Level of {}: {}".format(element,emotions[element]))
 
-    print('The text have, a {} feeling, with score of {}\n'.format(
+    print('The text have a {} feeling, with score of {}\n'.format(
         sentiments['label'],sentiments['score']))
 
 #------------------------------------------------------------------------------#
@@ -85,5 +108,4 @@ if __name__ == '__main__':
     try:
         main()
     except:
-        print("IOError detected, restarting...")
-        main()
+        sys.exit()
