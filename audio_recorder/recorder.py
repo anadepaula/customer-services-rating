@@ -1,3 +1,4 @@
+
 import pyaudio
 import wave
 
@@ -5,21 +6,24 @@ from sys import byteorder
 from array import array
 from struct import pack
 
+require('dotenv').config()
+
 class Recorder:
     def __init__(self, audio_file_path):
         self.audio_file_path = audio_file_path
-        self.threshold = 2500
+        self.threshold = 3500
         self.chunk_size = 2048
         self.format = pyaudio.paInt16
-        self.rate = 44100
-        self.maximum = 16384
+        self.rate = 32000
+        #self.maximum = 16384
+        self.maximum = 8192
 
+    # Returns 'True' if below the 'silent' threshold
     def is_silent(self, snd_data):
-        "Returns 'True' if below the 'silent' threshold"
         return max(snd_data) < self.threshold
 
+    # Average the volume out
     def normalize(self, snd_data):
-        "Average the volume out"
         times = float(self.maximum)/max(abs(i) for i in snd_data)
 
         r = array('h')
@@ -27,8 +31,8 @@ class Recorder:
             r.append(int(i*times))
         return r
 
+    # Trim the blank spots at the start and end
     def trim(self, snd_data):
-        "Trim the blank spots at the start and end"
         def _trim(snd_data):
             snd_started = False
             r = array('h')
@@ -51,34 +55,29 @@ class Recorder:
         snd_data.reverse()
         return snd_data
 
+    # Add silence to the start and end of 'snd_data' of length 'seconds' (float)
     def add_silence(self, snd_data, seconds):
-        "Add silence to the start and end of 'snd_data' of length 'seconds' (float)"
         r = array('h', [0 for i in range(int(seconds*self.rate))])
         r.extend(snd_data)
         r.extend([0 for i in range(int(seconds*self.rate))])
         return r
 
-    def record(self):
-        """
-        Record a word or words from the microphone and
-        return the data as an array of signed shorts.
+    # Record a word or words from the microphone andreturn the data as an array
+    # of signed shorts. Normalizes the audio, trims silence from the start and
+    # end, and pads with 0.5 seconds of blank sound to make sure players can
+    # play it.
 
-        Normalizes the audio, trims silence from the
-        start and end, and pads with 0.5 seconds of
-        blank sound to make sure VLC et al can play
-        it without getting chopped off.
-        """
+    def record(self):
         p = pyaudio.PyAudio()
         stream = p.open(format=self.format, channels=1, rate=self.rate,
-            input=True, output=True,
-            frames_per_buffer=self.chunk_size)
+            input=True, output=True, frames_per_buffer=self.chunk_size)
 
         num_silent = 0
         snd_started = False
 
         r = array('h')
 
-        while 1:
+        while True:
             # little endian, signed short
             snd_data = array('h', stream.read(self.chunk_size))
             if byteorder == 'big':
@@ -92,7 +91,7 @@ class Recorder:
             elif not silent and not snd_started:
                 snd_started = True
 
-            if snd_started and num_silent > 50:
+            if snd_started and num_silent > 32:
                 break
 
         sample_width = p.get_sample_size(self.format)
@@ -102,11 +101,12 @@ class Recorder:
 
         r = self.normalize(r)
         r = self.trim(r)
-        r = self.add_silence(r, 0.5)
+        r = self.add_silence(r, 0.2)
         return sample_width, r
 
+    # Records from the microphone and outputs the resulting data to
+    #    'self.audio_file_path'
     def record_to_file(self):
-        "Records from the microphone and outputs the resulting data to 'self.audio_file_path'"
         sample_width, data = self.record()
         data = pack('<' + ('h'*len(data)), *data)
 
