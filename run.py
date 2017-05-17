@@ -1,3 +1,14 @@
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Author: Ana de Paula, anaspaula17@gmail.com
+# Date: may/2017
+
+# coding=utf-8
+
 import os
 import json
 import sys
@@ -79,11 +90,11 @@ def transcribe_audio(audio_file,extension,model):
         print("I'm sorry, the audio is blank! Try again.")
         sys.exit()
 
-    return transcripted_text
+    return transcripted_text.rstrip()
 
 #------------------------------------------------------------------------------#
 
-def get_text_data(text):
+def get_text_data(text,language):
 
     natural_language_understanding = NaturalLanguageUnderstanding(
         version = '2017-02-27',
@@ -93,95 +104,92 @@ def get_text_data(text):
 
     return natural_language_understanding.analyze(
         text = text,
-        features = [features.Emotion(), features.Sentiment(), features.Keywords()]
+        features = [features.Emotion(), features.Sentiment(), features.Keywords()],
+        language=language
     )
 
 
 #------------------------------------------------------------------------------#
 
-def write_in_file(file_path,transcripted_text,transcripted_text_data):
-    if transcripted_text_data['language'] not in LANGUAGES:
-        print("Something went wrong :(")
-        sys.exit()
-    filename = './results/results_'+transcripted_text_data['language']+'.csv'
-    print("Text transcription: \n\t{}\n".format(transcripted_text))
-    with open (filename,'a') as results:
-        results.write('{},{}'.format(file_path,transcripted_text))
-
-        if transcripted_text_data['language'] in NONE:
+def write_in_file(text,text_data):
+    #print(json.dumps(text_data, indent=4, sort_keys=True))
+    filename = './results/results_'+text_data['language']+'.csv'
+    with open (filename,'a') as results_output:
+        results_output.write(text)
+        if text_data['language'] in NONE:
             print("Watson Developer Cloud does not support natural language "
-                "understanding in this language.\n")
+                "understanding in this language.")
+
         else:
-            sentiments = transcripted_text_data['sentiment']['document']
-            print('The text have a {} feeling, with score of {}\n'.format(
+            sentiments = text_data['sentiment']['document']
+            results_output.write((',{},{}'.format(
+                sentiments['label'],sentiments['score'])).encode('utf-8'))
+            print('The text have a {} feeling, with score of {}.'.format(
                 sentiments['label'],sentiments['score']))
-            results.write(',{},{}'.format(sentiments['label'],sentiments['score']))
 
-            if transcripted_text_data['language'] in SENTIMENT:
+            if text_data['language'] in SENTIMENT:
                 print("Watson Developer Cloud does not support keyword and emotion "
-                "spotting in this language.\n")
-            else:
-                keywords = {}
-                for i in transcripted_text_data['keywords']:
-                    keywords[i['text']] = i['relevance']
-                    results.write(',{}'.format(i))
-                for word in keywords.keys():
-                    print ("\'{}\' is in the text with relevance {}.".format(
-                        word, keywords[word]))
+                    "spotting in this language.")
 
-                if transcripted_text_data['language'] in SENTIMENT_KEYWORD:
-                    print("Watson Developer Cloud does not support emotion spotting "
-                    "in this language.\n")
+            else:
+                keywords = text_data['keywords']
+                keywords_list=[]
+                for i in keywords:
+                    keywords_list.append(i['text'])
+                    print ("'"'{}'"' is in the text with relevance {}.".format(
+                        i['text'], i['relevance']))
+                    results_output.write((','+';'.join(keywords_list)).encode('utf-8'))
+                if text_data['language'] in SENTIMENT_KEYWORD:
+                    print("Watson Developer Cloud does not support emotion "
+                        "spotting in this language.")
                 else:
-                    emotions = transcripted_text_data['emotion']['document']['emotion']
-                    for element in emotions.keys():
-                        print ("Level of {}: {}".format(element,emotions[element]))
-                    results.write(',{},{},{},{},{}\n'.format(
+                    emotions = text_data['emotion']['document']['emotion']
+                    for i in emotions.keys():
+                        print ("Level of {}: {}".format(i,emotions[i]))
+                    results_output.write((',{},{},{},{},{}\n'.format(
                         emotions['anger'],emotions['joy'],emotions['sadness'],
-                        emotions['fear'],emotions['disgust']))
-    print("Data saved in: \'{}\'".format(filename))
+                        emotions['fear'],emotions['disgust'])).encode('utf-8'))
+
+    print("Data saved in '"'{}'"'.".format(filename))
 
 #------------------------------------------------------------------------------#
 
 def main():
 
-    # parse command line parameters
     parser = argparse.ArgumentParser(
         description=('Client to process audio using Watson Developer Cloud')
     )
     parser.add_argument(
         '-in', action = 'store', dest='file_path',
-        help = 'absolute file path, if an existing audio will be used.'
-        'Leave blank for record an audio.'
+        help = 'absolute file path, if an existing audio will be used. '
+            'Leave blank for record an audio.'
     )
 
     parser.add_argument(
         '-model', action = 'store', dest='model',
         default = 'en-US_BroadbandModel',
-        help = 'insert one of the following models or leave blank for using'
-            'en-US_BroadbandModel: ar-AR_BroadbandModel, en-UK_BroadbandModel, '
-            'en-UK_NarrowbandModel, en-US_NarrowbandModel, es-ES_BroadbandModel, '
-            'es-ES_NarrowbandModel, fr-FR_BroadbandModel, ja-JP_BroadbandModel, '
-            'ja-JP_NarrowbandModel, pt-BR_NarrowbandModel, zh-CN_BroadbandModel, '
-            'zh-CN_NarrowbandModel'
+        help = 'insert one of the following models or leave blank for using '
+            '\'en-US_BroadbandModel\': '
+            'ar-AR_BroadbandModel, en-UK_BroadbandModel, '
+            'en-UK_NarrowbandModel, en-US_NarrowbandModel, '
+            'es-ES_BroadbandModel, es-ES_NarrowbandModel, '
+            'fr-FR_BroadbandModel, ja-JP_BroadbandModel, '
+            'ja-JP_NarrowbandModel, pt-BR_NarrowbandModel, '
+            'zh-CN_BroadbandModel, zh-CN_NarrowbandModel'
     )
 
     args = parser.parse_args()
-
     audio_file, extension = get_audio_and_extension(args.file_path)
 
-    print("Transcribing audio....")
-    transcripted_text = transcribe_audio(audio_file,extension,args.model)
+    print("Transcribing audio")
+    transcripted_text = (transcribe_audio(audio_file,extension,args.model)).encode('utf-8')
+    print('Getting text data')
+    transcripted_text_data = get_text_data(transcripted_text,args.model[:2])
+    print("Audio text: '"'{}'"'.".format(transcripted_text))
+    print("Writing in file")
+    write_in_file(transcripted_text,transcripted_text_data)
 
-    print('Getting text data...')
-    transcripted_text_data = get_text_data(transcripted_text)
-
-    #print(json.dumps(transcripted_text_data, indent=4, sort_keys=True))
-
-    print("Writing in file....")
-    write_in_file(args.file_path,transcripted_text,transcripted_text_data)
-
-    print("That's all, folks!")
+    print("All done!")
 
 #------------------------------------------------------------------------------#
 
