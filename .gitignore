@@ -1,6 +1,7 @@
 # dirs
 ./ignore/
 ./recordings/
+./git/
 
 # dotenv
 .env

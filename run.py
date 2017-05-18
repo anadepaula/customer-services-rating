@@ -34,13 +34,13 @@ ALLOWED_EXTENSIONS = ("wav","flac","ogg","l16","webm","mulaw","basic")
 LANGUAGES = {
     "en-US":{"model":"en-US_BroadbandModel",
         "supported_categories":("sentiment","keyword","emotion")},
-    "en-UK":{"model":"en-UK_NarrowbandModel",
+    "en-UK":{"model":"en-UK_BroadbandModel",
         "supported_categories":("sentiment","keyword","emotion")},
     "fr-FR":{"model":"fr-FR_BroadbandModel",
         "supported_categories":("sentiment","keyword")},
-    "es-ES":{"model":"es-ES_NarrowbandModel",
+    "es-ES":{"model":"es-ES_BroadbandModel",
         "supported_categories":("sentiment","keyword")},
-    "pt-BR":{"model":"pt-BR_NarrowbandModel",
+    "pt-BR":{"model":"pt-BR_BroadbandModel",
         "supported_categories":("sentiment")},
     "ar-AR":{"model":"ar-AR_BroadbandModel",
         "supported_categories":("sentiment")}
@@ -111,7 +111,6 @@ def transcribe_audio(audio_file, extension, model):
         except Exception as ex:
             print(ex)
             raise
-    #print(json.dumps(result, indent=4, sort_keys=True))
     try:
         transcripted_text = result["results"][0]["alternatives"][0]["transcript"]
     except:
@@ -150,7 +149,6 @@ def get_text_data(text,language):
 # directory './results'. Shows information about the text in the screen.
 
 def write_in_file(text,text_data,language):
-    #print(json.dumps(text_data, indent=4, sort_keys=True))
     results_output = open("./results/results_" + language + ".csv",'a')
     keywords_output = open("./results/keywords_" + language + ".csv",'a')
     print("Audio text: '"'{}'"'.".format(text))
