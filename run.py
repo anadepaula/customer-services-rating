@@ -24,11 +24,6 @@ from watson_developer_cloud import NaturalLanguageUnderstandingV1 \
 from watson_developer_cloud import SpeechToTextV1 as SpeechToText
 from audio_recorder.recorder import Recorder
 
-BLUEMIX-STT-USERNAME="ff833930-186c-473b-bfa0-33987add2831"
-BLUEMIX-STT-PASSWORD="3nS6UxNhOXn5"
-BLUEMIX-NLU-USERNAME="530e87c4-575f-4fbe-9cb0-94e937329e81"
-BLUEMIX-NLU-PASSWORD="To4ZAQZBjUTg"
-
 # List of the allowed file extensions
 ALLOWED_EXTENSIONS = ("wav","flac","ogg","l16","webm","mulaw","basic")
 
@@ -50,6 +45,14 @@ LANGUAGES = {
     "ar-AR":{"model":"ar-AR_BroadbandModel",
         "supported_categories":("sentiment")}
 }
+
+#------------------------------------------------------------------------------#
+
+def setup_ambient():
+    if not os.path.isdir("./results/"):
+        os.mkdir("./results/")
+    if not os.path.isdir("./recordings/"):
+        os.mkdir("./recordings/")
 
 #------------------------------------------------------------------------------#
 # Copy or record an audio file into the './recordings/' directory, depending
@@ -98,10 +101,8 @@ def get_audio_and_extension(file_input,language):
 
 def transcribe_audio(audio_file, extension, model):
 
-    #username = os.environ.get("BLUEMIX-STT-USERNAME")
-    #password = os.environ.get("BLUEMIX-STT-PASSWORD")
-    username = BLUEMIX-STT-USERNAME
-    password = BLUEMIX-STT-PASSWORD
+    username = os.environ.get("BLUEMIX-STT-USERNAME")
+    password = os.environ.get("BLUEMIX-STT-PASSWORD")
 
     speech_to_text = SpeechToText(
         username = username,
@@ -137,10 +138,8 @@ def transcribe_audio(audio_file, extension, model):
 #   emotions
 #   sentiment
 def get_text_data(text,language):
-    #username = os.environ.get("BLUEMIX-NLU-USERNAME"),
-    #password = os.environ.get("BLUEMIX-NLU-PASSWORD")
-    username = BLUEMIX-NLU-USERNAME
-    password = BLUEMIX-NLU-PASSWORD
+    username = os.environ.get("BLUEMIX-NLU-USERNAME")
+    password = os.environ.get("BLUEMIX-NLU-PASSWORD")
 
     natural_language_understanding = NaturalLanguageUnderstanding(
         version = "2017-02-27",
@@ -230,6 +229,8 @@ def main():
         print("Sorry, the file does not exist! Try again.")
         sys.exit()
 
+    setup_ambient()
+
     model = LANGUAGES[args.language]["model"]
     language = args.language
     # Handle audio data
@@ -248,8 +249,8 @@ def main():
 #------------------------------------------------------------------------------#
 
 if __name__ == '__main__':
-#    dotenv_path = join(dirname(__file__), '.env')
-#    load_dotenv(dotenv_path)
+    dotenv_path = join(dirname(__file__), '.env')
+    load_dotenv(dotenv_path)
     try:
         main()
     except:
