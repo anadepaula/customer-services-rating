@@ -4,8 +4,8 @@
 # You may obtain a copy of the License at
 #      http://www.apache.org/licenses/LICENSE-2.0
 #
-# Author: Ana de Paula, anaspaula17@gmail.com
-# Date: may/2017
+# Author:   Ana de Paula, anaspaula17@gmail.com
+# Date:     may/2017
 
 # coding=utf-8
 
@@ -83,13 +83,13 @@ def get_audio_and_extension(file_input,language):
 #------------------------------------------------------------------------------#
 
 # Receives an valid audio file, its extension and a  valid model, send it to
-# the Speech To Text services and receives an JSON with the transcription.
+# the Speech To Text services and receives a JSON with the transcription.
 # Returns the transcripted audio.
 # It may not recognize the speaking if:
 #   there is no speaking;
-#   the sample rate is below the model;
+#   the sample rate is below the one required by the model;
 #   the voices are too low or the ambient is noisy.
-# In any of this cases, the program is interrupted.
+# In any of those cases, the program is interrupted.
 
 def transcribe_audio(audio_file, extension, model):
 
@@ -123,8 +123,8 @@ def transcribe_audio(audio_file, extension, model):
 
 #------------------------------------------------------------------------------#
 
-# Receives the transcriptes text and its language and sent it to the
-# Natural Language Understanding services, receives back an JSON with
+# Receives the transcripted text and its language and send it to the
+# Natural Language Understanding services, receives back a JSON with
 # the data and return it.
 # The text is analyzed in three dimensions:
 #   keywords spotting
@@ -177,7 +177,11 @@ def write_in_file(text,text_data,language):
             emotions = text_data["emotion"]["document"]["emotion"]
             for i in emotions.keys():
                 print ("Level of {}: {}".format(i, emotions[i]))
-#            results_output.write((",{},{},{},{},{}\n".format(emotions["anger"],emotions["joy"],emotions["sadness"],emotions["fear"],emotions["disgust"])).encode("utf-8"))
+            results_output.write((",{},{},{},{},{}".format(emotions["anger"],
+                emotions["joy"],emotions["sadness"],emotions["fear"],
+                emotions["disgust"])).encode("utf-8"))
+    keywords_output.write("\n")
+    results_output.write("\n")
     keywords_output.close()
     results_output.close()
 
@@ -230,7 +234,7 @@ def main():
     # Writing data in the files
     print("Writing in file.")
     write_in_file(text,text_data,language)
-    print("Thank you!")
+    print("That's all! Thank you.")
 
 #------------------------------------------------------------------------------#
 
