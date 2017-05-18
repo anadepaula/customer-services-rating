@@ -2,7 +2,10 @@
 ignore/
 recordings/
 .git/
+./recordings
+./results
 
 # dotenv
 .env
 .gitinore
+run-with-credentials.py
