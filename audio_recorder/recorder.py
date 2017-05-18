@@ -1,12 +1,10 @@
+# coding=utf-8
 
 import pyaudio
 import wave
-
 from sys import byteorder
 from array import array
 from struct import pack
-
-require('dotenv').config()
 
 class Recorder:
     def __init__(self, audio_file_path):

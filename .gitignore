@@ -3,4 +3,4 @@
 ./recordings/
 
 # dotenv
-
+.env
