@@ -11,7 +11,8 @@ In this case, the audio recorded would be sent to the Speech-To-Text services fo
 
 ## Using
 
-Is mandatory to install the requirements listed in `requirements.txt`
+Is mandatory to install the requirements listed in `requirements.txt`. This can be done using `pip` with:
+`pip install -r requirements.txt`
 
 Is required to set a dotenv with the credentials for the Speech-to-text and Natural Language Understanding services in the format:
 
@@ -44,4 +45,4 @@ The results are saved in `.csv` files in the directory `./results/`. They can be
 
 This program was developed by
 [Ana de Paula](https://github.com/anadepaula)
-in may,2017. 
+in may,2017.
